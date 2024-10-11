@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SharonsMindMaps</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>SharonsMindMaps</h1>
+    <div id="cardContainer">
+        <!-- Karteikarten werden hier hinzugefügt -->
+    </div>
+    <!-- Eingabefelder für neue Karteikarten -->
+    <div id="inputContainer" style="display: none;">
+        <h3>Neue Karteikarte erstellen:</h3>
+        <input type="text" id="frontText" placeholder="Vorderseite Text">
+        <textarea id="backText" placeholder="Rückseite Text oder Reflexionsfragen"></textarea>
+        <button onclick="addCard()">Karte hinzufügen</button>
+    </div>
+    <!-- Anpassungsleiste -->
+    <div class="toolbar">
+        <button onclick="toggleInputFields()">Neue Karte</button>
+        <button onclick="setMode('connect')">Verbinden</button>
+        <label>
+            Schriftart:
+            <select id="fontSelector" onchange="changeFont(this.value)">
+                <option value="Arial">Arial</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Verdana">Verdana</option>
+            </select>
+        </label>
+        <label>
+            Schriftfarbe:
+            <input type="color" id="colorPicker" onchange="changeColor(this.value)">
+        </label>
+        <button onclick="toggleBold()">Fett</button>
+        <button onclick="resizeCard(1.2)">Größer</button>
+        <button onclick="resizeCard(0.8)">Kleiner</button>
+    </div>
+    <canvas id="connectionCanvas"></canvas>
+    <script src="script.js"></script>
+</body>
+</html>
