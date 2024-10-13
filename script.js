@@ -154,26 +154,32 @@ function makeCardDraggable(card) {
         document.addEventListener('touchmove', dragMove);
         document.addEventListener('touchend', dragEnd);
     }
-} function changeFont(fontFamily) {
-    document.getElementById('cardContainer').style.fontFamily = fontFamily;
+}
+
+function changeFont(fontFamily) {
+    if (selectedCard) {
+        selectedCard.style.fontFamily = fontFamily;
+    }
 }
 
 function changeColor(color) {
-    document.getElementById('cardContainer').style.color = color;
+    if (selectedCard) {
+        selectedCard.style.color = color;
+    }
 }
 
 function toggleBold() {
-    const cardContainer = document.getElementById('cardContainer');
-    cardContainer.style.fontWeight = cardContainer.style.fontWeight === 'bold' ? 'normal' : 'bold';
+    if (selectedCard) {
+        selectedCard.style.fontWeight = selectedCard.style.fontWeight === 'bold' ? 'normal' : 'bold';
+    }
 }
 
 function resizeCard(factor) {
-    const cards = document.querySelectorAll('.card');
-    cards.forEach(card => {
-        const currentWidth = parseInt(getComputedStyle(card).width);
-        const currentHeight = parseInt(getComputedStyle(card).height);
-        card.style.width = `${currentWidth * factor}px`;
-        card.style.height = `${currentHeight * factor}px`;
-    });
-    redrawConnections();
+    if (selectedCard) {
+        const currentWidth = parseInt(getComputedStyle(selectedCard).width);
+        const currentHeight = parseInt(getComputedStyle(selectedCard).height);
+        selectedCard.style.width = `${currentWidth * factor}px`;
+        selectedCard.style.height = `${currentHeight * factor}px`;
+        redrawConnections();
+    }
 }
