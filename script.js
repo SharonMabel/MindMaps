@@ -1,7 +1,18 @@
 let selectedCard = null;
-let mode = null;
-let offsetX, offsetY;
+let mode = 'create'; // Startet im Erstellmodus
 let connections = [];
+
+// Modusanzeige-Element aktualisieren
+const modeIndicator = document.createElement('div');
+modeIndicator.id = 'modeIndicator';
+modeIndicator.style.position = 'fixed';
+modeIndicator.style.top = '10px';
+modeIndicator.style.right = '10px';
+modeIndicator.style.padding = '5px';
+modeIndicator.style.backgroundColor = 'lightgray';
+modeIndicator.style.borderRadius = '5px';
+modeIndicator.innerText = `Modus: ${mode === 'connect' ? 'Verbindungsmodus' : 'Karten erstellen'}`;
+document.body.appendChild(modeIndicator);
 
 const cardContainer = document.getElementById('cardContainer');
 const canvas = document.getElementById('connectionCanvas');
@@ -38,7 +49,7 @@ function addCard() {
         document.getElementById('backText').value = '';
         toggleInputFields();
     } else {
-        alert('Bitte Vorder- und Rückseite ausfüllen!');
+        alert('Bitte Vorder- und RÃ¼ckseite ausfÃ¼llen!');
     }
 }
 
@@ -49,6 +60,7 @@ function toggleInputFields() {
 
 function setMode(newMode) {
     mode = newMode;
+    modeIndicator.innerText = `Modus: ${mode === 'connect' ? 'Verbindungsmodus' : 'Karten erstellen'}`;
     if (selectedCard) {
         selectedCard.classList.remove('active');
         selectedCard = null;
@@ -76,10 +88,21 @@ function selectCard(card) {
         selectedCard = card;
         card.classList.add('active');
     } else if (selectedCard !== card) {
-        drawConnection(selectedCard, card);
+        // Linie nur ziehen, wenn Verbindung nicht existiert
+        if (!connectionExists(selectedCard, card)) {
+            drawConnection(selectedCard, card);
+            connections.push({ card1: selectedCard, card2: card });
+        }
         selectedCard.classList.remove('active');
         selectedCard = null;
     }
+}
+
+function connectionExists(card1, card2) {
+    return connections.some(conn => 
+        (conn.card1 === card1 && conn.card2 === card2) ||
+        (conn.card1 === card2 && conn.card2 === card1)
+    );
 }
 
 function drawConnection(card1, card2) {
@@ -96,28 +119,11 @@ function drawConnection(card1, card2) {
     ctx.strokeStyle = 'blue';
     ctx.lineWidth = 2;
     ctx.stroke();
-
-    connections.push({ card1, card2 });
-    console.log(`Verbindung gezeichnet von Karte1 (${startX}, ${startY}) zu Karte2 (${endX}, ${endY})`);
 }
 
 function redrawConnections() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    connections.forEach(conn => {
-        const rect1 = conn.card1.getBoundingClientRect();
-        const rect2 = conn.card2.getBoundingClientRect();
-        const startX = rect1.left + rect1.width / 2 + window.pageXOffset;
-        const startY = rect1.top + rect1.height / 2 + window.pageYOffset;
-        const endX = rect2.left + rect2.width / 2 + window.pageXOffset;
-        const endY = rect2.top + rect2.height / 2 + window.pageYOffset;
-
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-        ctx.strokeStyle = 'blue';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-    });
+    connections.forEach(conn => drawConnection(conn.card1, conn.card2));
 }
 
 function makeCardDraggable(card) {
@@ -154,7 +160,7 @@ function makeCardDraggable(card) {
         document.addEventListener('touchmove', dragMove);
         document.addEventListener('touchend', dragEnd);
     }
-}
+} 
 
 function changeFont(fontFamily) {
     if (selectedCard) {
