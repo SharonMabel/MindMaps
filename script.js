@@ -100,9 +100,12 @@ function drawConnection(card1, card2) {
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY);
-    ctx.strokeStyle = 'blue';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = lineColor;          // Farbe setzen
+    ctx.lineWidth = lineWidth;            // Breite setzen
+    ctx.setLineDash(lineStyle === 'dashed' ? [5, 5] : lineStyle === 'dotted' ? [2, 2] : []); // Stil setzen
     ctx.stroke();
+
+    ctx.setLineDash([]); // Zurücksetzen auf Standard
 }
 function updateModeIndicator() {
     const modeIndicator = document.getElementById('modeIndicator');
@@ -113,3 +116,20 @@ function toggleConnectMode() {
     document.querySelector("button[onclick='toggleConnectMode()']").innerText = `Verbindungsmodus: ${mode === 'connect' ? 'An' : 'Aus'}`;
     updateModeIndicator(); // Modusanzeige aktualisieren
 }
+// Aktuelle Verbindungseinstellungen
+let lineColor = "#0000ff"; // Standardfarbe Blau
+let lineStyle = "solid";   // Standardstil Durchgezogen
+let lineWidth = 2;         // Standardbreite
+
+// Event Listener für Verbindungseinstellungen
+document.getElementById('lineColor').addEventListener('change', (e) => {
+    lineColor = e.target.value;
+});
+
+document.getElementById('lineStyle').addEventListener('change', (e) => {
+    lineStyle = e.target.value;
+});
+
+document.getElementById('lineWidth').addEventListener('change', (e) => {
+    lineWidth = parseInt(e.target.value);
+});
