@@ -104,3 +104,12 @@ function drawConnection(card1, card2) {
     ctx.lineWidth = 2;
     ctx.stroke();
 }
+function updateModeIndicator() {
+    const modeIndicator = document.getElementById('modeIndicator');
+    modeIndicator.innerText = `Modus: ${mode === 'connect' ? 'Verbindungsmodus' : 'Erstellen'}`;
+}
+function toggleConnectMode() {
+    mode = mode === 'connect' ? 'create' : 'connect';
+    document.querySelector("button[onclick='toggleConnectMode()']").innerText = `Verbindungsmodus: ${mode === 'connect' ? 'An' : 'Aus'}`;
+    updateModeIndicator(); // Modusanzeige aktualisieren
+}

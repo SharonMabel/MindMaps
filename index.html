@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mindmap-System</title>
     <style>
+        #modeIndicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background: lightgray;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            font-weight: bold;
+        }
+    </style>
+
+    <style>
         body {
             margin: 0;
             padding: 0;
@@ -66,6 +80,8 @@
     </style>
 </head>
 <body>
+    <div id="modeIndicator">Modus: Erstellen</div>
+
     <div id="cardContainer">
         <canvas id="connectionCanvas"></canvas>
     </div>
