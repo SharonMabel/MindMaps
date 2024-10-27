@@ -133,3 +133,37 @@ document.getElementById('lineStyle').addEventListener('change', (e) => {
 document.getElementById('lineWidth').addEventListener('change', (e) => {
     lineWidth = parseInt(e.target.value);
 });
+// Überprüfung, ob eine Verbindung zwischen zwei Karten existiert
+function connectionExists(card1, card2) {
+    return connections.some(conn => 
+        (conn.card1 === card1 && conn.card2 === card2) ||
+        (conn.card1 === card2 && conn.card2 === card1)
+    );
+}
+
+// Verbindung zeichnen (nur wenn keine doppelte Verbindung besteht)
+function drawConnection(card1, card2) {
+    if (connectionExists(card1, card2)) {
+        return; // Abbrechen, wenn bereits eine Verbindung existiert
+    }
+
+    const rect1 = card1.getBoundingClientRect();
+    const rect2 = card2.getBoundingClientRect();
+    const startX = rect1.left + rect1.width / 2;
+    const startY = rect1.top + rect1.height / 2;
+    const endX = rect2.left + rect2.width / 2;
+    const endY = rect2.top + rect2.height / 2;
+
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = lineWidth;
+    ctx.setLineDash(lineStyle === 'dashed' ? [5, 5] : lineStyle === 'dotted' ? [2, 2] : []);
+    ctx.stroke();
+
+    ctx.setLineDash([]); // Linienstil zurücksetzen
+
+    // Verbindung in das Array speichern
+    connections.push({ card1: card1, card2: card2 });
+}
