@@ -1,14 +1,12 @@
 let selectedCard = null;
-let mode = 'create';
+let mode = 'create'; // Startet im Erstellmodus
 let connections = [];
 
-// Canvas für Verbindungslinien
 const canvas = document.getElementById('connectionCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Karte hinzufügen
 function addCard() {
     const frontText = document.getElementById('frontText').value;
     const backText = document.getElementById('backText').value;
@@ -25,21 +23,39 @@ function addCard() {
         `;
         
         cardContainer.appendChild(card);
-        card.addEventListener('click', () => toggleCard(card));
+        card.addEventListener('click', () => handleCardClick(card));
         makeCardDraggable(card);
 
-        // Felder zurücksetzen
         document.getElementById('frontText').value = '';
         document.getElementById('backText').value = '';
     }
 }
 
-// Karte umdrehen
+function toggleConnectMode() {
+    mode = mode === 'connect' ? 'create' : 'connect';
+    document.querySelector("button[onclick='toggleConnectMode()']").innerText = `Verbindungsmodus: ${mode === 'connect' ? 'An' : 'Aus'}`;
+}
+
+function handleCardClick(card) {
+    if (mode === 'connect') {
+        if (selectedCard === null) {
+            selectedCard = card;
+            card.classList.add('active');
+        } else if (selectedCard !== card) {
+            drawConnection(selectedCard, card);
+            connections.push({ card1: selectedCard, card2: card });
+            selectedCard.classList.remove('active');
+            selectedCard = null;
+        }
+    } else {
+        toggleCard(card);
+    }
+}
+
 function toggleCard(card) {
     card.classList.toggle('flipped');
 }
 
-// Karte verschiebbar machen
 function makeCardDraggable(card) {
     card.addEventListener('mousedown', startDragging);
 
@@ -68,13 +84,11 @@ function makeCardDraggable(card) {
     }
 }
 
-// Verbindungen neu zeichnen
 function redrawConnections() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     connections.forEach(conn => drawConnection(conn.card1, conn.card2));
 }
 
-// Verbindung zeichnen
 function drawConnection(card1, card2) {
     const rect1 = card1.getBoundingClientRect();
     const rect2 = card2.getBoundingClientRect();
