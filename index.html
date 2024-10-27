@@ -1,51 +1,76 @@
 <!DOCTYPE html>
-<html lang="de">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SharonsMindMaps</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Mindmap</title>
+    <style>
+        .card {
+            position: absolute;
+            width: 200px;
+            height: 120px;
+            perspective: 1000px;
+            cursor: move;
+        }
+
+        .card.active {
+            border: 2px solid blue;
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        #cardContainer {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 100px);
+            overflow: auto;
+        }
+
+        #connectionCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        #inputContainer {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+    </style>
 </head>
 <body>
-    <h1>SharonsMindMaps</h1>
     <div id="cardContainer">
-        <!-- Karteikarten werden hier hinzugefügt -->
+        <canvas id="connectionCanvas"></canvas>
     </div>
-    <!-- Eingabefelder für neue Karteikarten -->
-    <div id="inputContainer" style="display: none;">
-        <h3>Neue Karteikarte erstellen:</h3>
-        <input type="text" id="frontText" placeholder="Vorderseite Text">
-        <textarea id="backText" placeholder="Rückseite Text oder Reflexionsfragen"></textarea>
+    
+    <div id="inputContainer">
+        <input type="text" id="frontText" placeholder="Vorderseite">
+        <input type="text" id="backText" placeholder="Rückseite">
         <button onclick="addCard()">Karte hinzufügen</button>
     </div>
-    <!-- Anpassungsleiste -->
-    <div class="toolbar">
-        <button onclick="toggleInputFields()">Neue Karte</button>
-        <button onclick="setMode('connect')">Verbinden</button>
-        <label>
-            Schriftart:
-            <select id="fontSelector" onchange="changeFont(this.value)">
-                <option value="Arial">Arial</option>
-                <option value="Courier New">Courier New</option>
-                <option value="Georgia">Georgia</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Verdana">Verdana</option>
-            </select>
-        </label>
-        <label>
-            Schriftfarbe:
-            <input type="color" id="colorPicker" onchange="changeColor(this.value)">
-        </label>
-        <button onclick="toggleBold()">Fett</button>
-        <button onclick="resizeCard(1.2)">Größer</button>
-        <button onclick="resizeCard(0.8)">Kleiner</button>
-    </div>
-    <canvas id="connectionCanvas"></canvas>
-    <script src="script.js"></script>
-
-    <!-- Statusanzeige zum Testen -->
-    <footer>
-        <p>Testversion geladen - alles funktioniert!</p>
-    </footer>
 </body>
 </html>
