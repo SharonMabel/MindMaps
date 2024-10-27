@@ -1,18 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-    <title>Mindmap</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mindmap-System</title>
     <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #cardContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: auto;
+        }
+
+        #connectionCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+
         .card {
             position: absolute;
             width: 200px;
             height: 120px;
             perspective: 1000px;
             cursor: move;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
         }
 
         .card.active {
             border: 2px solid blue;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
         }
 
         .card-front, .card-back {
@@ -25,40 +54,14 @@
             border-radius: 5px;
             padding: 10px;
             box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
 
         .card-back {
             transform: rotateY(180deg);
-        }
-
-        .card.flipped {
-            transform: rotateY(180deg);
-        }
-
-        #cardContainer {
-            position: relative;
-            width: 100%;
-            height: calc(100vh - 100px);
-            overflow: auto;
-        }
-
-        #connectionCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        #inputContainer {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
     </style>
 </head>
@@ -66,11 +69,13 @@
     <div id="cardContainer">
         <canvas id="connectionCanvas"></canvas>
     </div>
-    
+
     <div id="inputContainer">
         <input type="text" id="frontText" placeholder="Vorderseite">
         <input type="text" id="backText" placeholder="Rückseite">
         <button onclick="addCard()">Karte hinzufügen</button>
     </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
