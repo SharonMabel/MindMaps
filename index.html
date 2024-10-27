@@ -86,28 +86,35 @@
         <canvas id="connectionCanvas"></canvas>
     </div>
 
-    <div id="inputContainer">
-        <input type="text" id="frontText" placeholder="Vorderseite">
-        <input type="text" id="backText" placeholder="Rückseite">
-        <button onclick="addCard()">Karte hinzufügen</button>
-    </div>
+    <div id="sidebar">
+        <h2>Mindmap-Einstellungen</h2>
     
-    <div id="connectionSettings" style="position: fixed; left: 10px; top: 10%; padding: 10px; background: white; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-        <h3>Verbindungseinstellungen</h3>
-        <label>Farbe:
-            <input type="color" id="lineColor" value="#0000ff">
-        </label><br>
-        <label>Linienstil:
+        <!-- Karten-Erstellungsbereich -->
+        <div id="cardCreation">
+            <h3>Neue Karte erstellen:</h3>
+            <label for="frontText">Vorderseite:</label>
+            <textarea id="frontText" placeholder="Vorderseite Text" rows="3"></textarea><br>
+            <label for="backText">Rückseite:</label>
+            <textarea id="backText" placeholder="Rückseite Text oder Reflexionsfragen" rows="5"></textarea><br>
+            <button onclick="addCard()">Karte hinzufügen</button>
+        </div>
+        
+        <!-- Verbindungseinstellungen -->
+        <div id="connectionSettings">
+            <h3>Verbindungseinstellungen:</h3>
+            <label>Farbe:</label>
+            <input type="color" id="lineColor" value="#0000ff"><br>
+            <label>Linienstil:</label>
             <select id="lineStyle">
                 <option value="solid">Durchgezogen</option>
                 <option value="dashed">Gestrichelt</option>
                 <option value="dotted">Gepunktet</option>
-            </select>
-        </label><br>
-        <label>Linienstärke:
+            </select><br>
+            <label>Linienstärke:</label>
             <input type="range" id="lineWidth" min="1" max="10" value="2">
-        </label>
+        </div>
     </div>
+    
     
     <!-- Verbindungsmodus-Button -->
     <button onclick="toggleConnectMode()">Verbindungsmodus: Aus</button>

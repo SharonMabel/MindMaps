@@ -44,3 +44,53 @@
     border: 3px solid red;
     box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); /* Optional für bessere Sichtbarkeit */
 }
+#sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 300px;
+    background-color: #f8f8f8;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+#sidebar h2, #sidebar h3 {
+    margin-top: 0;
+}
+
+#cardCreation, #connectionSettings {
+    margin-bottom: 20px;
+}
+
+textarea {
+    width: 100%;
+    resize: vertical;
+    font-size: 14px;
+    padding: 5px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: none;
+    border-radius: 5px;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+#connectionSettings label {
+    display: block;
+    margin-top: 10px;
+}
