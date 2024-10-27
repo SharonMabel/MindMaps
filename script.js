@@ -1,196 +1,308 @@
 let selectedCard = null;
-let mode = 'create'; // Startet im Erstellmodus
+let mode = 'create';
 let connections = [];
+let selectedConnection = null;
 
-// Modusanzeige-Element aktualisieren
-const modeIndicator = document.createElement('div');
-modeIndicator.id = 'modeIndicator';
-modeIndicator.style.position = 'fixed';
-modeIndicator.style.top = '10px';
-modeIndicator.style.right = '10px';
-modeIndicator.style.padding = '5px';
-modeIndicator.style.backgroundColor = 'lightgray';
-modeIndicator.style.borderRadius = '5px';
-modeIndicator.innerText = `Modus: ${mode === 'connect' ? 'Verbindungsmodus' : 'Karten erstellen'}`;
-document.body.appendChild(modeIndicator);
+// Styles für Verbindungslinien
+const lineStyles = {
+    solid: [],
+    dashed: [5, 5],
+    dotted: [2, 2],
+    dashedLong: [10, 5]
+};
 
-// Toggle-Button für Modi
-const toggleModeButton = document.createElement('button');
-toggleModeButton.innerText = 'Modus wechseln';
-toggleModeButton.style.position = 'fixed';
-toggleModeButton.style.top = '40px';
-toggleModeButton.style.right = '10px';
-toggleModeButton.addEventListener('click', () => setMode(mode === 'connect' ? 'create' : 'connect'));
-document.body.appendChild(toggleModeButton);
+// Funktion zum Speichern des aktuellen Zustands
+function saveMindmap() {
+    const cards = Array.from(document.querySelectorAll('.card')).map(card => ({
+        id: card.id,
+        frontText: card.querySelector('.card-front h2').textContent,
+        backText: card.querySelector('.card-back p').textContent,
+        position: {
+            left: card.style.left,
+            top: card.style.top
+        },
+        style: {
+            width: card.style.width,
+            height: card.style.height,
+            fontFamily: card.style.fontFamily,
+            color: card.style.color,
+            fontWeight: card.style.fontWeight
+        }
+    }));
 
-const cardContainer = document.getElementById('cardContainer');
-const canvas = document.getElementById('connectionCanvas');
-const ctx = canvas.getContext('2d');
+    const savedConnections = connections.map(conn => ({
+        card1Id: conn.card1.id,
+        card2Id: conn.card2.id,
+        style: conn.style || {
+            color: 'blue',
+            width: 2,
+            lineStyle: 'solid'
+        }
+    }));
 
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    canvas.style.position = 'absolute';
-    canvas.style.top = '0';
-    canvas.style.left = '0';
-    canvas.style.pointerEvents = 'none';
+    const mindmapData = {
+        cards: cards,
+        connections: savedConnections,
+        lastModified: new Date().toISOString()
+    };
+
+    // Speichern in localStorage
+    localStorage.setItem('mindmap', JSON.stringify(mindmapData));
+    
+    // Optional: Speichern auf einem Server
+    // saveMindmapToServer(mindmapData);
+}
+
+// Funktion zum Laden einer gespeicherten Mindmap
+function loadMindmap() {
+    const savedData = localStorage.getItem('mindmap');
+    if (!savedData) return;
+
+    const mindmapData = JSON.parse(savedData);
+    
+    // Bestehende Karten und Verbindungen löschen
+    cardContainer.innerHTML = '';
+    connections = [];
+    
+    // Karten wiederherstellen
+    mindmapData.cards.forEach(cardData => {
+        const card = createCard(cardData.frontText, cardData.backText);
+        card.id = cardData.id;
+        card.style.left = cardData.position.left;
+        card.style.top = cardData.position.top;
+        Object.assign(card.style, cardData.style);
+        cardContainer.appendChild(card);
+    });
+    
+    // Verbindungen wiederherstellen
+    mindmapData.connections.forEach(conn => {
+        const card1 = document.getElementById(conn.card1Id);
+        const card2 = document.getElementById(conn.card2Id);
+        if (card1 && card2) {
+            connections.push({
+                card1: card1,
+                card2: card2,
+                style: conn.style
+            });
+        }
+    });
+    
     redrawConnections();
 }
 
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
+// Verbindungsmanagement-Panel erstellen
+function createConnectionPanel() {
+    const panel = document.createElement('div');
+    panel.id = 'connectionPanel';
+    panel.style.cssText = `
+        position: fixed;
+        left: 10px;
+        top: 10px;
+        background: white;
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    `;
 
-function addCard() {
-    const frontText = document.getElementById('frontText').value;
-    const backText = document.getElementById('backText').value;
-    if (frontText && backText) {
-        const card = document.createElement('div');
-        card.classList.add('card');
-        card.style.top = "50px";
-        card.style.left = "50px";
-        card.innerHTML = `
-            <div class="card-front"><h2>${frontText}</h2></div>
-            <div class="card-back"><p>${backText}</p></div>
-        `;
-        cardContainer.appendChild(card);
-        makeCardDraggable(card);
-        document.getElementById('frontText').value = '';
-        document.getElementById('backText').value = '';
-        toggleInputFields();
-    } else {
-        alert('Bitte Vorder- und Rückseite ausfüllen!');
-    }
+    panel.innerHTML = `
+        <h3>Verbindungseinstellungen</h3>
+        <div>
+            <label>Linienfarbe:</label>
+            <input type="color" id="lineColor" value="#0000ff">
+        </div>
+        <div>
+            <label>Linienstärke:</label>
+            <input type="range" id="lineWidth" min="1" max="10" value="2">
+        </div>
+        <div>
+            <label>Linienstil:</label>
+            <select id="lineStyle">
+                <option value="solid">Durchgezogen</option>
+                <option value="dashed">Gestrichelt</option>
+                <option value="dotted">Gepunktet</option>
+                <option value="dashedLong">Lang gestrichelt</option>
+            </select>
+        </div>
+        <button id="deleteConnection">Verbindung löschen</button>
+        <button id="saveButton">Mindmap speichern</button>
+        <button id="loadButton">Mindmap laden</button>
+    `;
+
+    document.body.appendChild(panel);
+
+    // Event Listener für die Verbindungseinstellungen
+    document.getElementById('lineColor').addEventListener('change', updateConnectionStyle);
+    document.getElementById('lineWidth').addEventListener('change', updateConnectionStyle);
+    document.getElementById('lineStyle').addEventListener('change', updateConnectionStyle);
+    document.getElementById('deleteConnection').addEventListener('click', deleteSelectedConnection);
+    document.getElementById('saveButton').addEventListener('click', saveMindmap);
+    document.getElementById('loadButton').addEventListener('click', loadMindmap);
 }
 
-function toggleInputFields() {
-    const inputContainer = document.getElementById('inputContainer');
-    inputContainer.style.display = inputContainer.style.display === 'none' ? 'block' : 'none';
+function updateConnectionStyle() {
+    if (!selectedConnection) return;
+
+    selectedConnection.style = {
+        color: document.getElementById('lineColor').value,
+        width: document.getElementById('lineWidth').value,
+        lineStyle: document.getElementById('lineStyle').value
+    };
+    redrawConnections();
 }
 
-function setMode(newMode) {
-    mode = newMode;
-    modeIndicator.innerText = `Modus: ${mode === 'connect' ? 'Verbindungsmodus' : 'Karten erstellen'}`;
-    // Aktive Karte zurücksetzen beim Moduswechsel
-    if (selectedCard) {
-        selectedCard.classList.remove('active');
-        selectedCard = null;
-    }
-    // Cursor-Style für alle Karten aktualisieren
-    const cards = document.querySelectorAll('.card');
-    cards.forEach(card => {
-        card.style.cursor = mode === 'connect' ? 'pointer' : 'move';
-    });
+function deleteSelectedConnection() {
+    if (!selectedConnection) return;
+    connections = connections.filter(conn => conn !== selectedConnection);
+    selectedConnection = null;
+    redrawConnections();
 }
 
-cardContainer.addEventListener('click', (event) => {
-    const card = event.target.closest('.card');
-    if (!card) return;
-
-    if (mode === 'connect') {
-        selectCard(card);
-    } else {
-        toggleCard(card);
-    }
-    event.stopPropagation();
-});
-
-function toggleCard(card) {
-    card.classList.toggle('flipped');
-}
-
-function selectCard(card) {
-    if (selectedCard === null) {
-        selectedCard = card;
-        card.classList.add('active');
-    } else {
-        if (selectedCard !== card) {
-            // Prüfen ob Verbindung bereits existiert
-            if (!connectionExists(selectedCard, card)) {
-                drawConnection(selectedCard, card);
-                connections.push({ card1: selectedCard, card2: card });
-            }
-        }
-        selectedCard.classList.remove('active');
-        selectedCard = null;
-    }
-}
-
-function connectionExists(card1, card2) {
-    return connections.some(conn => 
-        (conn.card1 === card1 && conn.card2 === card2) ||
-        (conn.card1 === card2 && conn.card2 === card1)
-    );
-}
-
-function drawConnection(card1, card2) {
+// Verbesserte drawConnection Funktion
+function drawConnection(card1, card2, style = null) {
     const rect1 = card1.getBoundingClientRect();
     const rect2 = card2.getBoundingClientRect();
     
-    // Mittelpunkte der Karten berechnen
     const startX = rect1.left + rect1.width / 2;
     const startY = rect1.top + rect1.height / 2;
     const endX = rect2.left + rect2.width / 2;
     const endY = rect2.top + rect2.height / 2;
 
     ctx.beginPath();
+    ctx.setLineDash(lineStyles[style?.lineStyle || 'solid']);
+    ctx.strokeStyle = style?.color || 'blue';
+    ctx.lineWidth = style?.width || 2;
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY);
-    ctx.strokeStyle = 'blue';
-    ctx.lineWidth = 2;
     ctx.stroke();
+    ctx.setLineDash([]); // Reset dash style
 }
 
+// Verbesserte redrawConnections Funktion
 function redrawConnections() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     connections.forEach(conn => {
-        if (conn.card1.isConnected && conn.card2.isConnected) {
-            drawConnection(conn.card1, conn.card2);
-        }
+        drawConnection(conn.card1, conn.card2, conn.style);
     });
 }
 
-// Verbesserte Version der makeCardDraggable Funktion
-function makeCardDraggable(card) {
-    let isDragging = false;
+// Event Listener für Verbindungsauswahl
+canvas.addEventListener('click', (e) => {
+    if (mode !== 'connect') return;
+
+    const clickX = e.clientX;
+    const clickY = e.clientY;
     
-    card.addEventListener('mousedown', startDragging);
-    card.addEventListener('touchstart', startDragging);
-
-    function startDragging(e) {
-        // Nur im Erstellmodus Drag erlauben
-        if (mode === 'connect') return;
+    // Finde die angeklickte Verbindung
+    selectedConnection = connections.find(conn => {
+        const rect1 = conn.card1.getBoundingClientRect();
+        const rect2 = conn.card2.getBoundingClientRect();
         
-        isDragging = true;
-        e.preventDefault();
-        const startX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
-        const startY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
-        const startLeft = card.offsetLeft;
-        const startTop = card.offsetTop;
+        const x1 = rect1.left + rect1.width / 2;
+        const y1 = rect1.top + rect1.height / 2;
+        const x2 = rect2.left + rect2.width / 2;
+        const y2 = rect2.top + rect2.height / 2;
+        
+        // Berechne Abstand des Klickpunkts zur Linie
+        const distance = distanceToLine(clickX, clickY, x1, y1, x2, y2);
+        return distance < 10; // 10px Toleranz
+    });
 
-        function dragMove(e) {
-            if (!isDragging) return;
-            
-            const currentX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
-            const currentY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
-            const newLeft = startLeft + currentX - startX;
-            const newTop = startTop + currentY - startY;
+    redrawConnections();
+});
 
-            card.style.left = `${newLeft}px`;
-            card.style.top = `${newTop}px`;
-            redrawConnections();
-        }
+// Hilfsfunktion zur Berechnung des Abstands eines Punktes zu einer Linie
+function distanceToLine(px, py, x1, y1, x2, y2) {
+    const A = px - x1;
+    const B = py - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
 
-        function dragEnd() {
-            isDragging = false;
-            document.removeEventListener('mousemove', dragMove);
-            document.removeEventListener('mouseup', dragEnd);
-            document.removeEventListener('touchmove', dragMove);
-            document.removeEventListener('touchend', dragEnd);
-        }
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D;
+    let param = -1;
 
-        document.addEventListener('mousemove', dragMove);
-        document.addEventListener('mouseup', dragEnd);
-        document.addEventListener('touchmove', dragMove);
-        document.addEventListener('touchend', dragEnd);
+    if (lenSq !== 0) param = dot / lenSq;
+
+    let xx, yy;
+
+    if (param < 0) {
+        xx = x1;
+        yy = y1;
+    } else if (param > 1) {
+        xx = x2;
+        yy = y2;
+    } else {
+        xx = x1 + param * C;
+        yy = y1 + param * D;
     }
+
+    const dx = px - xx;
+    const dy = py - yy;
+    return Math.sqrt(dx * dx + dy * dy);
 }
+
+// Funktion zum Erstellen einer neuen Karte mit eindeutiger ID
+function createCard(frontText, backText) {
+    const card = document.createElement('div');
+    card.classList.add('card');
+    card.id = 'card_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    card.style.top = "50px";
+    card.style.left = "50px";
+    card.innerHTML = `
+        <div class="card-front"><h2>${frontText}</h2></div>
+        <div class="card-back"><p>${backText}</p></div>
+    `;
+    makeCardDraggable(card);
+    return card;
+}
+
+// Kartengrößen-Steuerung
+function addCardSizeControls() {
+    const sizeControls = document.createElement('div');
+    sizeControls.id = 'sizeControls';
+    sizeControls.style.cssText = `
+        position: fixed;
+        right: 10px;
+        bottom: 10px;
+        background: white;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    `;
+    
+    sizeControls.innerHTML = `
+        <button id="decreaseSize">-</button>
+        <button id="resetSize">Reset</button>
+        <button id="increaseSize">+</button>
+    `;
+    
+    document.body.appendChild(sizeControls);
+    
+    document.getElementById('decreaseSize').onclick = () => scaleSelectedCard(0.9);
+    document.getElementById('resetSize').onclick = () => resetCardSize();
+    document.getElementById('increaseSize').onclick = () => scaleSelectedCard(1.1);
+}
+
+function scaleSelectedCard(factor) {
+    if (!selectedCard) return;
+    
+    const currentWidth = parseInt(getComputedStyle(selectedCard).width);
+    const currentHeight = parseInt(getComputedStyle(selectedCard).height);
+    
+    selectedCard.style.width = `${currentWidth * factor}px`;
+    selectedCard.style.height = `${currentHeight * factor}px`;
+    
+    redrawConnections();
+}
+
+function resetCardSize() {
+    if (!selectedCard) return;
+    selectedCard.style.width = '200px';  // oder deine Standard-Kartengröße
+    selectedCard.style.height = '120px';
+    redrawConnections();
+}
+
+// Initialisierung
+createConnectionPanel();
+addCardSizeControls();
