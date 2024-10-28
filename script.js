@@ -7,6 +7,12 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// Verbindungseinstellungen
+let lineColor = "#0000ff"; // Standardfarbe Blau
+let lineStyle = "solid";   // Standardstil Durchgezogen
+let lineWidth = 2;         // Standardbreite
+
+// Karten hinzufügen
 function addCard() {
     const frontText = document.getElementById('frontText').value;
     const backText = document.getElementById('backText').value;
@@ -31,11 +37,20 @@ function addCard() {
     }
 }
 
+// Modusanzeige aktualisieren
+function updateModeIndicator() {
+    const modeIndicator = document.getElementById('modeIndicator');
+    modeIndicator.innerText = `Modus: ${mode === 'connect' ? 'Verbindungsmodus' : 'Erstellen'}`;
+}
+
+// Modus umschalten
 function toggleConnectMode() {
     mode = mode === 'connect' ? 'create' : 'connect';
     document.querySelector("button[onclick='toggleConnectMode()']").innerText = `Verbindungsmodus: ${mode === 'connect' ? 'An' : 'Aus'}`;
+    updateModeIndicator();
 }
 
+// Karten anklicken und Verbindungen herstellen
 function handleCardClick(card) {
     if (mode === 'connect') {
         if (selectedCard === null) {
@@ -43,7 +58,6 @@ function handleCardClick(card) {
             card.classList.add('active');
         } else if (selectedCard !== card) {
             drawConnection(selectedCard, card);
-            connections.push({ card1: selectedCard, card2: card });
             selectedCard.classList.remove('active');
             selectedCard = null;
         }
@@ -52,10 +66,12 @@ function handleCardClick(card) {
     }
 }
 
+// Karte umdrehen
 function toggleCard(card) {
     card.classList.toggle('flipped');
 }
 
+// Karte verschiebbar machen
 function makeCardDraggable(card) {
     card.addEventListener('mousedown', startDragging);
 
@@ -84,42 +100,43 @@ function makeCardDraggable(card) {
     }
 }
 
+// Überprüfung, ob eine Verbindung bereits existiert
+function connectionExists(card1, card2) {
+    return connections.some(conn => 
+        (conn.card1 === card1 && conn.card2 === card2) ||
+        (conn.card1 === card2 && conn.card2 === card1)
+    );
+}
+
+// Verbindung zeichnen
+function drawConnection(card1, card2) {
+    if (!connectionExists(card1, card2)) {
+        connections.push({ card1: card1, card2: card2 });
+    }
+    redrawConnections();
+}
+
+// Verbindungen neu zeichnen
 function redrawConnections() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    connections.forEach(conn => drawConnection(conn.card1, conn.card2));
-}
+    connections.forEach(conn => {
+        const rect1 = conn.card1.getBoundingClientRect();
+        const rect2 = conn.card2.getBoundingClientRect();
+        const startX = rect1.left + rect1.width / 2;
+        const startY = rect1.top + rect1.height / 2;
+        const endX = rect2.left + rect2.width / 2;
+        const endY = rect2.top + rect2.height / 2;
 
-function drawConnection(card1, card2) {
-    const rect1 = card1.getBoundingClientRect();
-    const rect2 = card2.getBoundingClientRect();
-    const startX = rect1.left + rect1.width / 2;
-    const startY = rect1.top + rect1.height / 2;
-    const endX = rect2.left + rect2.width / 2;
-    const endY = rect2.top + rect2.height / 2;
-
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(endX, endY);
-    ctx.strokeStyle = lineColor;          // Farbe setzen
-    ctx.lineWidth = lineWidth;            // Breite setzen
-    ctx.setLineDash(lineStyle === 'dashed' ? [5, 5] : lineStyle === 'dotted' ? [2, 2] : []); // Stil setzen
-    ctx.stroke();
-
-    ctx.setLineDash([]); // Zurücksetzen auf Standard
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = lineWidth;
+        ctx.setLineDash(lineStyle === 'dashed' ? [5, 5] : lineStyle === 'dotted' ? [2, 2] : []);
+        ctx.stroke();
+    });
+    ctx.setLineDash([]);
 }
-function updateModeIndicator() {
-    const modeIndicator = document.getElementById('modeIndicator');
-    modeIndicator.innerText = `Modus: ${mode === 'connect' ? 'Verbindungsmodus' : 'Erstellen'}`;
-}
-function toggleConnectMode() {
-    mode = mode === 'connect' ? 'create' : 'connect';
-    document.querySelector("button[onclick='toggleConnectMode()']").innerText = `Verbindungsmodus: ${mode === 'connect' ? 'An' : 'Aus'}`;
-    updateModeIndicator(); // Modusanzeige aktualisieren
-}
-// Aktuelle Verbindungseinstellungen
-let lineColor = "#0000ff"; // Standardfarbe Blau
-let lineStyle = "solid";   // Standardstil Durchgezogen
-let lineWidth = 2;         // Standardbreite
 
 // Event Listener für Verbindungseinstellungen
 document.getElementById('lineColor').addEventListener('change', (e) => {
@@ -133,37 +150,3 @@ document.getElementById('lineStyle').addEventListener('change', (e) => {
 document.getElementById('lineWidth').addEventListener('change', (e) => {
     lineWidth = parseInt(e.target.value);
 });
-// Überprüfung, ob eine Verbindung zwischen zwei Karten existiert
-function connectionExists(card1, card2) {
-    return connections.some(conn => 
-        (conn.card1 === card1 && conn.card2 === card2) ||
-        (conn.card1 === card2 && conn.card2 === card1)
-    );
-}
-
-// Verbindung zeichnen (nur wenn keine doppelte Verbindung besteht)
-function drawConnection(card1, card2) {
-    if (connectionExists(card1, card2)) {
-        return; // Abbrechen, wenn bereits eine Verbindung existiert
-    }
-
-    const rect1 = card1.getBoundingClientRect();
-    const rect2 = card2.getBoundingClientRect();
-    const startX = rect1.left + rect1.width / 2;
-    const startY = rect1.top + rect1.height / 2;
-    const endX = rect2.left + rect2.width / 2;
-    const endY = rect2.top + rect2.height / 2;
-
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(endX, endY);
-    ctx.strokeStyle = lineColor;
-    ctx.lineWidth = lineWidth;
-    ctx.setLineDash(lineStyle === 'dashed' ? [5, 5] : lineStyle === 'dotted' ? [2, 2] : []);
-    ctx.stroke();
-
-    ctx.setLineDash([]); // Linienstil zurücksetzen
-
-    // Verbindung in das Array speichern
-    connections.push({ card1: card1, card2: card2 });
-}
