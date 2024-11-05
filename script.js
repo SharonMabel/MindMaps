@@ -26,8 +26,9 @@ function addCard() {
         card.innerHTML = `
             <div class="card-front"><h2>${frontText}</h2></div>
             <div class="card-back"><p>${backText}</p></div>
+            <img src="https://sharonmabel.github.io/MindMaps/Black%20Lock%20Icon.png" class="lock-icon" onclick="toggleLock(this)">
         `;
-        
+
         cardContainer.appendChild(card);
         card.addEventListener('click', () => handleCardClick(card));
         makeCardDraggable(card);
