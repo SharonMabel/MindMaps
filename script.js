@@ -1,7 +1,7 @@
 let selectedCard = null;
 let mode = 'create';
 let connections = [];
-let gridSize = 20; // Größe der Rasterzellen in Pixeln
+let gridSize = 20;
 
 const canvas = document.getElementById('connectionCanvas');
 const ctx = canvas.getContext('2d');
@@ -19,7 +19,6 @@ function drawGrid() {
     ctx.strokeStyle = '#e0e0e0';
     ctx.lineWidth = 0.5;
 
-    // Vertikale Linien
     for (let x = 0; x < canvas.width; x += gridSize) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
@@ -27,7 +26,6 @@ function drawGrid() {
         ctx.stroke();
     }
 
-    // Horizontale Linien
     for (let y = 0; y < canvas.height; y += gridSize) {
         ctx.beginPath();
         ctx.moveTo(0, y);
@@ -37,7 +35,7 @@ function drawGrid() {
     ctx.restore();
 }
 
-// Funktion zum Einrasten in das Raster
+// Einrasten in das Raster
 function snapToGrid(value) {
     return Math.round(value / gridSize) * gridSize;
 }
@@ -46,9 +44,9 @@ function snapToGrid(value) {
 function toggleLock(lockIcon) {
     const card = lockIcon.parentElement;
     if (card.classList.toggle('locked')) {
-        lockIcon.style.filter = 'none'; // Original schwarzes Icon
+        lockIcon.style.filter = 'none';
     } else {
-        lockIcon.style.filter = 'opacity(0.5)'; // Transparentes Icon für entriegelt
+        lockIcon.style.filter = 'opacity(0.5)';
     }
 }
 
@@ -72,8 +70,6 @@ function addCard() {
         cardContainer.appendChild(card);
         card.addEventListener('click', () => handleCardClick(card));
         makeCardDraggable(card);
-
-        // Initial Lock-Icon transparent setzen
         card.querySelector('.lock-icon').style.filter = 'opacity(0.5)';
 
         document.getElementById('frontText').value = '';
@@ -86,10 +82,7 @@ function makeCardDraggable(card) {
     card.addEventListener('mousedown', startDragging);
 
     function startDragging(e) {
-        // Wenn die Karte gesperrt ist oder das Click-Event vom Lock-Icon kommt, nicht verschieben
-        if (card.classList.contains('locked') || e.target.classList.contains('lock-icon')) {
-            return;
-        }
+        if (card.classList.contains('locked') || e.target.classList.contains('lock-icon')) return;
 
         e.preventDefault();
         const startX = e.clientX;
@@ -100,24 +93,17 @@ function makeCardDraggable(card) {
         function dragMove(e) {
             const newLeft = startLeft + (e.clientX - startX);
             const newTop = startTop + (e.clientY - startY);
-            
-            // Während des Ziehens noch keine Rasterfunktion
             card.style.left = `${newLeft}px`;
             card.style.top = `${newTop}px`;
             redrawConnections();
         }
 
         function dragEnd() {
-            // Beim Loslassen in Raster einrasten
             const finalLeft = snapToGrid(card.offsetLeft);
             const finalTop = snapToGrid(card.offsetTop);
-            
-            // Sanfte Animation zum Rasterpunkt
             card.style.transition = 'all 0.2s ease';
             card.style.left = `${finalLeft}px`;
             card.style.top = `${finalTop}px`;
-            
-            // Transition nach Animation zurücksetzen
             setTimeout(() => {
                 card.style.transition = '';
             }, 200);
@@ -132,11 +118,27 @@ function makeCardDraggable(card) {
     }
 }
 
-// Verbindungen neu zeichnen mit Raster
+// Überprüfung, ob eine Verbindung bereits existiert
+function connectionExists(card1, card2) {
+    return connections.some(conn => 
+        (conn.card1 === card1 && conn.card2 === card2) ||
+        (conn.card1 === card2 && conn.card2 === card1)
+    );
+}
+
+// Verbindung zeichnen (falls keine doppelte Verbindung existiert)
+function drawConnection(card1, card2) {
+    if (!connectionExists(card1, card2)) {
+        connections.push({ card1, card2 });
+    }
+    redrawConnections();
+}
+
+// Verbindungen neu zeichnen
 function redrawConnections() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawGrid(); // Zuerst das Raster zeichnen
-    
+    drawGrid();
+
     connections.forEach(conn => {
         const rect1 = conn.card1.getBoundingClientRect();
         const rect2 = conn.card2.getBoundingClientRect();
@@ -156,31 +158,28 @@ function redrawConnections() {
     ctx.setLineDash([]);
 }
 
-// Füge auch etwas CSS hinzu
-const style = document.createElement('style');
-style.textContent = `
-.card {
-    position: absolute;
-    transition: transform 0.3s ease;
+// Karteninteraktionen
+function handleCardClick(card) {
+    if (mode === 'connect') {
+        if (selectedCard === null) {
+            selectedCard = card;
+            card.classList.add('active');
+        } else if (selectedCard !== card) {
+            drawConnection(selectedCard, card);
+            selectedCard.classList.remove('active');
+            selectedCard = null;
+        }
+    } else {
+        toggleCard(card);
+    }
 }
 
-.lock-icon {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-    z-index: 1000;
+// Karte umdrehen
+function toggleCard(card) {
+    card.classList.toggle('flipped');
 }
 
-.locked {
-    cursor: not-allowed;
-}
-`;
-document.head.appendChild(style);
-
-// Initial das Raster zeichnen
+// Initiales Raster zeichnen
 drawGrid();
 
 // Event Listener für Fenstergrößenänderungen
