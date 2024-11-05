@@ -1,6 +1,7 @@
 let selectedCard = null;
-let mode = 'create'; // Startet im Erstellmodus
+let mode = 'create';
 let connections = [];
+let gridSize = 20; // Größe der Rasterzellen in Pixeln
 
 const canvas = document.getElementById('connectionCanvas');
 const ctx = canvas.getContext('2d');
@@ -8,9 +9,48 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 // Verbindungseinstellungen
-let lineColor = "#0000ff"; // Standardfarbe Blau
-let lineStyle = "solid";   // Standardstil Durchgezogen
-let lineWidth = 2;         // Standardbreite
+let lineColor = "#0000ff";
+let lineStyle = "solid";
+let lineWidth = 2;
+
+// Funktion zum Zeichnen des Rasters
+function drawGrid() {
+    ctx.save();
+    ctx.strokeStyle = '#e0e0e0';
+    ctx.lineWidth = 0.5;
+
+    // Vertikale Linien
+    for (let x = 0; x < canvas.width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+    }
+
+    // Horizontale Linien
+    for (let y = 0; y < canvas.height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+// Funktion zum Einrasten in das Raster
+function snapToGrid(value) {
+    return Math.round(value / gridSize) * gridSize;
+}
+
+// Toggle Lock-Status
+function toggleLock(lockIcon) {
+    const card = lockIcon.parentElement;
+    if (card.classList.toggle('locked')) {
+        lockIcon.style.filter = 'none'; // Original schwarzes Icon
+    } else {
+        lockIcon.style.filter = 'opacity(0.5)'; // Transparentes Icon für entriegelt
+    }
+}
 
 // Karten hinzufügen
 function addCard() {
@@ -33,43 +73,12 @@ function addCard() {
         card.addEventListener('click', () => handleCardClick(card));
         makeCardDraggable(card);
 
+        // Initial Lock-Icon transparent setzen
+        card.querySelector('.lock-icon').style.filter = 'opacity(0.5)';
+
         document.getElementById('frontText').value = '';
         document.getElementById('backText').value = '';
     }
-}
-
-// Modusanzeige aktualisieren
-function updateModeIndicator() {
-    const modeIndicator = document.getElementById('modeIndicator');
-    modeIndicator.innerText = `Modus: ${mode === 'connect' ? 'Verbindungsmodus' : 'Erstellen'}`;
-}
-
-// Modus umschalten
-function toggleConnectMode() {
-    mode = mode === 'connect' ? 'create' : 'connect';
-    document.querySelector("button[onclick='toggleConnectMode()']").innerText = `Verbindungsmodus: ${mode === 'connect' ? 'An' : 'Aus'}`;
-    updateModeIndicator();
-}
-
-// Karten anklicken und Verbindungen herstellen
-function handleCardClick(card) {
-    if (mode === 'connect') {
-        if (selectedCard === null) {
-            selectedCard = card;
-            card.classList.add('active');
-        } else if (selectedCard !== card) {
-            drawConnection(selectedCard, card);
-            selectedCard.classList.remove('active');
-            selectedCard = null;
-        }
-    } else {
-        toggleCard(card);
-    }
-}
-
-// Karte umdrehen
-function toggleCard(card) {
-    card.classList.toggle('flipped');
 }
 
 // Karte verschiebbar machen
@@ -77,6 +86,11 @@ function makeCardDraggable(card) {
     card.addEventListener('mousedown', startDragging);
 
     function startDragging(e) {
+        // Wenn die Karte gesperrt ist oder das Click-Event vom Lock-Icon kommt, nicht verschieben
+        if (card.classList.contains('locked') || e.target.classList.contains('lock-icon')) {
+            return;
+        }
+
         e.preventDefault();
         const startX = e.clientX;
         const startY = e.clientY;
@@ -86,12 +100,29 @@ function makeCardDraggable(card) {
         function dragMove(e) {
             const newLeft = startLeft + (e.clientX - startX);
             const newTop = startTop + (e.clientY - startY);
+            
+            // Während des Ziehens noch keine Rasterfunktion
             card.style.left = `${newLeft}px`;
             card.style.top = `${newTop}px`;
             redrawConnections();
         }
 
         function dragEnd() {
+            // Beim Loslassen in Raster einrasten
+            const finalLeft = snapToGrid(card.offsetLeft);
+            const finalTop = snapToGrid(card.offsetTop);
+            
+            // Sanfte Animation zum Rasterpunkt
+            card.style.transition = 'all 0.2s ease';
+            card.style.left = `${finalLeft}px`;
+            card.style.top = `${finalTop}px`;
+            
+            // Transition nach Animation zurücksetzen
+            setTimeout(() => {
+                card.style.transition = '';
+            }, 200);
+
+            redrawConnections();
             document.removeEventListener('mousemove', dragMove);
             document.removeEventListener('mouseup', dragEnd);
         }
@@ -101,25 +132,11 @@ function makeCardDraggable(card) {
     }
 }
 
-// Überprüfung, ob eine Verbindung bereits existiert
-function connectionExists(card1, card2) {
-    return connections.some(conn => 
-        (conn.card1 === card1 && conn.card2 === card2) ||
-        (conn.card1 === card2 && conn.card2 === card1)
-    );
-}
-
-// Verbindung zeichnen
-function drawConnection(card1, card2) {
-    if (!connectionExists(card1, card2)) {
-        connections.push({ card1: card1, card2: card2 });
-    }
-    redrawConnections();
-}
-
-// Verbindungen neu zeichnen
+// Verbindungen neu zeichnen mit Raster
 function redrawConnections() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawGrid(); // Zuerst das Raster zeichnen
+    
     connections.forEach(conn => {
         const rect1 = conn.card1.getBoundingClientRect();
         const rect2 = conn.card2.getBoundingClientRect();
@@ -139,15 +156,36 @@ function redrawConnections() {
     ctx.setLineDash([]);
 }
 
-// Event Listener für Verbindungseinstellungen
-document.getElementById('lineColor').addEventListener('change', (e) => {
-    lineColor = e.target.value;
-});
+// Füge auch etwas CSS hinzu
+const style = document.createElement('style');
+style.textContent = `
+.card {
+    position: absolute;
+    transition: transform 0.3s ease;
+}
 
-document.getElementById('lineStyle').addEventListener('change', (e) => {
-    lineStyle = e.target.value;
-});
+.lock-icon {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    z-index: 1000;
+}
 
-document.getElementById('lineWidth').addEventListener('change', (e) => {
-    lineWidth = parseInt(e.target.value);
+.locked {
+    cursor: not-allowed;
+}
+`;
+document.head.appendChild(style);
+
+// Initial das Raster zeichnen
+drawGrid();
+
+// Event Listener für Fenstergrößenänderungen
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    redrawConnections();
 });
