@@ -43,12 +43,17 @@ function snapToGrid(value) {
 // Toggle Lock-Status
 function toggleLock(lockIcon) {
     const card = lockIcon.parentElement;
-    if (card.classList.toggle('locked')) {
-        lockIcon.style.filter = 'none';
+    const isLocked = card.classList.toggle('locked');
+
+    if (isLocked) {
+        lockIcon.src = 'https://sharonmabel.github.io/MindMaps/Black%20Lock%20Icon.png'; // Gesperrtes Schloss anzeigen
+        lockIcon.style.opacity = '1';
     } else {
-        lockIcon.style.filter = 'opacity(0.5)';
+        lockIcon.src = 'https://sharonmabel.github.io/MindMaps/Open%20Lock%20Icon.png'; // Offenes Schloss anzeigen
+        lockIcon.style.opacity = '0.5';
     }
 }
+
 
 // Karten hinzufügen
 function addCard() {
@@ -77,12 +82,14 @@ function addCard() {
     }
 }
 
-// Karte verschiebbar machen
+// Karten verschiebbar machen und prüfen, ob die Karte gesperrt ist
 function makeCardDraggable(card) {
     card.addEventListener('mousedown', startDragging);
 
     function startDragging(e) {
-        if (card.classList.contains('locked') || e.target.classList.contains('lock-icon')) return;
+        if (card.classList.contains('locked') || e.target.classList.contains('lock-icon')) {
+            return; // Wenn gesperrt oder das Lock-Icon angeklickt wird, verschieben verhindern
+        }
 
         e.preventDefault();
         const startX = e.clientX;
@@ -93,6 +100,7 @@ function makeCardDraggable(card) {
         function dragMove(e) {
             const newLeft = startLeft + (e.clientX - startX);
             const newTop = startTop + (e.clientY - startY);
+
             card.style.left = `${newLeft}px`;
             card.style.top = `${newTop}px`;
             redrawConnections();
@@ -104,6 +112,7 @@ function makeCardDraggable(card) {
             card.style.transition = 'all 0.2s ease';
             card.style.left = `${finalLeft}px`;
             card.style.top = `${finalTop}px`;
+
             setTimeout(() => {
                 card.style.transition = '';
             }, 200);
