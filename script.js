@@ -205,6 +205,27 @@ window.addEventListener('resize', () => {
 
 // Funktion zum Laden der Karten aus JSON
 async function loadCards() {
+    console.log('Fetching cards from JSON...');
+    const response = await fetch('https://sharonmabel.github.io/MindMaps/cards.json');
+    console.log('Response:', response);
+
+    if (!response.ok) {
+        console.error('Error fetching cards:', response.status);
+        return;
+    }
+
+    const cards = await response.json();
+    console.log('Loaded cards:', cards);
+
+    const cardContainer = document.getElementById('cardContainer');
+    cardContainer.innerHTML = '';
+
+    cards.forEach(cardData => {
+        console.log('Creating card:', cardData);
+        // Restlicher Code zum Erstellen der Karten...
+    });
+}
+async function loadCards() {
     const response = await fetch('https://sharonmabel.github.io/MindMaps/cards.json');
     const cards = await response.json();
     
