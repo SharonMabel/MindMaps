@@ -1,7 +1,7 @@
 let selectedCard = null;
 let mode = 'create';
 let connections = [];
-let gridSize = 20;
+let gridSize = 50;
 
 const canvas = document.getElementById('connectionCanvas');
 const ctx = canvas.getContext('2d');
@@ -16,8 +16,8 @@ let lineWidth = 2;
 // Funktion zum Zeichnen des Rasters
 function drawGrid() {
     ctx.save();
-    ctx.strokeStyle = '#e0e0e0';
-    ctx.lineWidth = 0.5;
+    ctx.strokeStyle = '#d0d0d0';
+    ctx.lineWidth = 1;
 
     for (let x = 0; x < canvas.width; x += gridSize) {
         ctx.beginPath();
@@ -43,17 +43,10 @@ function snapToGrid(value) {
 // Toggle Lock-Status
 function toggleLock(lockIcon) {
     const card = lockIcon.parentElement;
-    const isLocked = card.classList.toggle('locked');
-
-    if (isLocked) {
-        lockIcon.src = 'https://sharonmabel.github.io/MindMaps/Black%20Lock%20Icon.png'; // Gesperrtes Schloss anzeigen
-        lockIcon.style.opacity = '1';
-    } else {
-        lockIcon.src = 'https://sharonmabel.github.io/MindMaps/Open%20Lock%20Icon.png'; // Offenes Schloss anzeigen
-        lockIcon.style.opacity = '0.5';
-    }
+    card.classList.toggle('locked');
+    lockIcon.classList.toggle('locked');
+    lockIcon.classList.toggle('unlocked');
 }
-
 
 // Karten hinzufügen
 function addCard() {
@@ -75,8 +68,8 @@ function addCard() {
         cardContainer.appendChild(card);
         card.addEventListener('click', () => handleCardClick(card));
         makeCardDraggable(card);
-        card.querySelector('.lock-icon').style.filter = 'opacity(0.5)';
-
+        card.querySelector('.lock-icon').classList.add('unlocked');
+        
         document.getElementById('frontText').value = '';
         document.getElementById('backText').value = '';
     }
@@ -88,7 +81,7 @@ function makeCardDraggable(card) {
 
     function startDragging(e) {
         if (card.classList.contains('locked') || e.target.classList.contains('lock-icon')) {
-            return; // Wenn gesperrt oder das Lock-Icon angeklickt wird, verschieben verhindern
+            return;
         }
 
         e.preventDefault();
@@ -141,6 +134,18 @@ function drawConnection(card1, card2) {
         connections.push({ card1, card2 });
     }
     redrawConnections();
+}
+
+// Verbindung löschen
+function deleteConnection(card1, card2) {
+    const index = connections.findIndex(conn => 
+        (conn.card1 === card1 && conn.card2 === card2) ||
+        (conn.card1 === card2 && conn.card2 === card1)
+    );
+    if (index !== -1) {
+        connections.splice(index, 1);
+        redrawConnections();
+    }
 }
 
 // Verbindungen neu zeichnen
@@ -198,13 +203,13 @@ window.addEventListener('resize', () => {
     redrawConnections();
 });
 
-//Funktion JSON Cards
+// Funktion zum Laden der Karten aus JSON
 async function loadCards() {
     const response = await fetch('https://sharonmabel.github.io/MindMaps/cards.json');
     const cards = await response.json();
     
     const cardContainer = document.getElementById('cardContainer');
-    cardContainer.innerHTML = ''; // Leeren des Containers vor dem Hinzufügen
+    cardContainer.innerHTML = '';
 
     cards.forEach(cardData => {
         const card = document.createElement('div');
@@ -212,10 +217,43 @@ async function loadCards() {
         card.innerHTML = `
             <div class="card-front"><h2>${cardData.frontText}</h2></div>
             <div class="card-back"><p>${cardData.backText}</p></div>
+            <img src="https://sharonmabel.github.io/MindMaps/Black%20Lock%20Icon.png" class="lock-icon" onclick="toggleLock(this)">
         `;
         cardContainer.appendChild(card);
+        makeCardDraggable(card);
+        card.querySelector('.lock-icon').classList.add('unlocked');
     });
 }
 
 // Ruft die Karten beim Laden der Seite ab
 window.onload = loadCards;
+
+// Einstellungsmenü
+const settingsMenu = document.getElementById('settingsMenu');
+const modeToggle = document.getElementById('modeToggle');
+const lineColorInput = document.getElementById('lineColor');
+const lineStyleSelect = document.getElementById('lineStyle');
+const lineWidthInput = document.getElementById('lineWidth');
+
+// Toggle Verbindungsmodus
+modeToggle.addEventListener('click', () => {
+    mode = mode === 'connect' ? 'create' : 'connect';
+    modeToggle.textContent = `Modus: ${mode === 'connect' ? 'Verbinden' : 'Erstellen'}`;
+    settingsMenu.classList.toggle('hidden', mode === 'connect');
+});
+
+// Einstellungen aktualisieren
+lineColorInput.addEventListener('input', () => {
+    lineColor = lineColorInput.value;
+    redrawConnections();
+});
+
+lineStyleSelect.addEventListener('change', () => {
+    lineStyle = lineStyleSelect.value;
+    redrawConnections();
+});
+
+lineWidthInput.addEventListener('input', () => {
+    lineWidth = parseInt(lineWidthInput.value);
+    redrawConnections();
+});
