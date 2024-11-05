@@ -197,3 +197,25 @@ window.addEventListener('resize', () => {
     canvas.height = window.innerHeight;
     redrawConnections();
 });
+
+//Funktion JSON Cards
+async function loadCards() {
+    const response = await fetch('https://sharonmabel.github.io/MindMaps/cards.json');
+    const cards = await response.json();
+    
+    const cardContainer = document.getElementById('cardContainer');
+    cardContainer.innerHTML = ''; // Leeren des Containers vor dem Hinzufügen
+
+    cards.forEach(cardData => {
+        const card = document.createElement('div');
+        card.classList.add('card');
+        card.innerHTML = `
+            <div class="card-front"><h2>${cardData.frontText}</h2></div>
+            <div class="card-back"><p>${cardData.backText}</p></div>
+        `;
+        cardContainer.appendChild(card);
+    });
+}
+
+// Ruft die Karten beim Laden der Seite ab
+window.onload = loadCards;
