@@ -1,50 +1,72 @@
-﻿/* Grundstil für Karten */
+﻿/* Reset und Basis-Styling */
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* Karten-Grundstil */
 .card {
     width: 300px;
     height: 200px;
     position: absolute;
     cursor: move;
-    transition: transform 1s ease;
-    transform-style: preserve-3d; /* 3D-Eigenschaft zur Vermeidung des Spiegel-Effekts */
-    background: #fff url('data:image/svg+xml;utf8,<svg xmlns="https://sharonmabel.github.io/MindMaps/Black%20Lock%20Icon.png" width="10" height="10"><circle cx="2" cy="2" r="1" fill="%23ccc" /></svg>') repeat;
+    transition: all 0.3s ease; /* Kürzere, responsive Transition */
+    transform-style: preserve-3d;
+    background: #fff;
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     border-radius: 10px;
     border: 1px solid #ddd;
     user-select: none;
+    /* Hintergrundbild-URL korrigiert */
+    background-image: url('https://sharonmabel.github.io/MindMaps/Black%20Lock%20Icon.png');
+    background-repeat: repeat;
+    background-size: 10px 10px;
 }
 
 .card.flipped {
     transform: rotateY(180deg);
 }
 
-/* Vorder- und Rückseite der Karten */
+/* Karten-Seiten */
 .card-front, .card-back {
     position: absolute;
     width: 100%;
     height: 100%;
-    backface-visibility: hidden; /* Verhindert das Spiegeln der Rückseite */
+    backface-visibility: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
-    border-radius: 10px;
+    border-radius: inherit; /* Erbt von .card */
     box-sizing: border-box;
 }
 
 .card-front {
-    background-color: #4CAF50;
+    background-color: var(--primary-color, #4CAF50);
     color: white;
 }
 
 .card-back {
-    background-color: #FFC107;
+    background-color: var(--secondary-color, #FFC107);
     color: black;
-    transform: rotateY(180deg); /* Rückseite korrekt drehen */
+    transform: rotateY(180deg);
 }
 
+/* Aktiver Kartenzustand */
 .card.active {
-    border: 3px solid red;
-    box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); /* Optional für bessere Sichtbarkeit */
+    border: 3px solid var(--highlight-color, red);
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+    z-index: 1; /* Hebt aktive Karte über andere */
+}
+
+/* Container-Layout */
+#cardContainer {
+    position: absolute;
+    left: var(--sidebar-width, 300px);
+    top: 0;
+    right: 0;
+    bottom: 0;
 }
 
 /* Schloss-Icon */
@@ -56,43 +78,48 @@
     height: 20px;
     cursor: pointer;
     opacity: 0.7;
+    transition: opacity 0.2s ease;
 }
 
 .lock-icon:hover {
     opacity: 1;
 }
 
-/* Sidebar-Stil */
+/* Sidebar */
 #sidebar {
     position: fixed;
     left: 0;
     top: 0;
-    bottom: 0;
-    width: 300px;
-    background-color: #eceff1; /* Heller Grauton für Absetzung */
+    width: var(--sidebar-width, 300px);
+    height: 100vh;
+    background-color: #f5f5f5;
     padding: 20px;
-    box-shadow: 3px 0 10px rgba(0,0,0,0.3); /* Stärkerer Schatten für Kontrast */
-    border-right: 2px solid #b0bec5; /* Optionaler Rand für zusätzliche Abtrennung */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     overflow-y: auto;
     z-index: 1000;
 }
 
-#sidebar h2, #sidebar h3 {
+#sidebar h2, 
+#sidebar h3 {
     margin-top: 0;
+    color: var(--text-color, #333);
 }
 
-#cardCreation, #connectionSettings {
+#cardCreation, 
+#connectionSettings {
     margin-bottom: 20px;
 }
 
-/* Textarea- und Button-Stil */
+/* Formular-Elemente */
 textarea {
     width: 100%;
     resize: vertical;
     font-size: 14px;
-    padding: 5px;
+    padding: 8px;
     margin-bottom: 10px;
     box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 4px;
 }
 
 button {
@@ -100,31 +127,65 @@ button {
     font-size: 14px;
     border: none;
     border-radius: 5px;
-    background-color: #4CAF50;
+    background-color: var(--primary-color, #4CAF50);
     color: white;
     cursor: pointer;
     margin-top: 10px;
     width: 100%;
+    transition: background-color 0.2s ease;
 }
 
 button:hover {
-    background-color: #45a049;
+    background-color: var(--primary-color-hover, #45a049);
 }
 
 #connectionSettings label {
     display: block;
     margin-top: 10px;
+    color: var(--text-color, #333);
 }
 
-/* Modusanzeige-Stil */
+/* Canvas für Verbindungen */
+#connectionCanvas {
+    position: fixed;
+    left: var(--sidebar-width, 300px);
+    top: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+/* Modusanzeige */
 #modeIndicator {
     position: fixed;
     top: 10px;
     right: 10px;
-    padding: 5px 10px;
-    background: lightgray;
+    padding: 8px 15px;
+    background-color: rgba(200, 200, 200, 0.9);
     border-radius: 5px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     z-index: 1000;
     font-weight: bold;
+}
+
+/* CSS-Variablen für einfache Anpassung */
+:root {
+    --sidebar-width: 300px;
+    --primary-color: #4CAF50;
+    --primary-color-hover: #45a049;
+    --secondary-color: #FFC107;
+    --highlight-color: red;
+    --text-color: #333;
+}
+
+/* Media Queries für Responsivität */
+@media (max-width: 768px) {
+    :root {
+        --sidebar-width: 250px;
+    }
+    
+    .card {
+        width: 250px;
+        height: 150px;
+    }
 }

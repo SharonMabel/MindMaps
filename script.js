@@ -60,8 +60,12 @@ function addCard() {
         card.style.width = '300px';
         card.style.height = '200px';
         card.style.position = 'absolute';
+        
+        // Neue initiale Position: 
+        // Wir berücksichtigen die Sidebar-Breite (z.B. 300px) und fügen einen Abstand hinzu
+        card.style.left = '350px';  // 300px Sidebar + 50px Abstand
         card.style.top = '50px';
-        card.style.left = '50px';
+        
         card.innerHTML = `
             <div class="card-front"><h2>${frontText}</h2></div>
             <div class="card-back"><p>${backText}</p></div>

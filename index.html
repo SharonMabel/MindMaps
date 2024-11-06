@@ -7,11 +7,10 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="modeIndicator">Modus: Erstellen</div>
-
-    <div id="cardContainer">
-        <canvas id="connectionCanvas"></canvas>
-    </div>
+    <!-- Canvas muss außerhalb des cardContainer sein, damit es unter den Karten liegt -->
+    <canvas id="connectionCanvas"></canvas>
+    
+    <div id="cardContainer"></div>
 
     <div id="sidebar">
         <h2>Mindmap-Einstellungen</h2>
@@ -26,8 +25,13 @@
             <button onclick="addCard()">Karte hinzufügen</button>
         </div>
         
+        <!-- Modus-Umschalter -->
+        <div id="modeToggleSection">
+            <button id="modeToggle">Modus: Erstellen</button>
+        </div>
+        
         <!-- Verbindungseinstellungen -->
-        <div id="connectionSettings">
+        <div id="settingsMenu">
             <h3>Verbindungseinstellungen:</h3>
             <label>Farbe:</label>
             <input type="color" id="lineColor" value="#0000ff"><br>
@@ -40,9 +44,14 @@
             <label>Linienstärke:</label>
             <input type="range" id="lineWidth" min="1" max="10" value="2">
         </div>
-    </div>
 
-    <button onclick="toggleConnectMode()">Verbindungsmodus: Aus</button>
+        <!-- JSON Import/Export -->
+        <div id="jsonControls">
+            <h3>Speichern & Laden:</h3>
+            <button onclick="saveCardsToJSON()">Mindmap speichern</button>
+            <button onclick="loadCards()">Mindmap laden</button>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
