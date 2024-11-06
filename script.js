@@ -1,17 +1,17 @@
+// Globale Variablen
 let selectedCard = null;
 let mode = 'create';
 let connections = [];
 let gridSize = 50;
+let lineColor = "#0000ff";
+let lineStyle = "solid";
+let lineWidth = 2;
 
+// Canvas Setup
 const canvas = document.getElementById('connectionCanvas');
 const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-
-// Verbindungseinstellungen
-let lineColor = "#0000ff";
-let lineStyle = "solid";
-let lineWidth = 2;
 
 // Funktion zum Zeichnen des Rasters
 function drawGrid() {
@@ -57,6 +57,9 @@ function addCard() {
     if (frontText && backText) {
         const card = document.createElement('div');
         card.classList.add('card');
+        card.style.width = '300px';
+        card.style.height = '200px';
+        card.style.position = 'absolute';
         card.style.top = '50px';
         card.style.left = '50px';
         card.innerHTML = `
@@ -75,7 +78,7 @@ function addCard() {
     }
 }
 
-// Karten verschiebbar machen und prüfen, ob die Karte gesperrt ist
+// Karten verschiebbar machen
 function makeCardDraggable(card) {
     card.addEventListener('mousedown', startDragging);
 
@@ -93,7 +96,7 @@ function makeCardDraggable(card) {
         function dragMove(e) {
             const newLeft = startLeft + (e.clientX - startX);
             const newTop = startTop + (e.clientY - startY);
-
+            
             card.style.left = `${newLeft}px`;
             card.style.top = `${newTop}px`;
             redrawConnections();
@@ -102,6 +105,7 @@ function makeCardDraggable(card) {
         function dragEnd() {
             const finalLeft = snapToGrid(card.offsetLeft);
             const finalTop = snapToGrid(card.offsetTop);
+            
             card.style.transition = 'all 0.2s ease';
             card.style.left = `${finalLeft}px`;
             card.style.top = `${finalTop}px`;
@@ -128,24 +132,12 @@ function connectionExists(card1, card2) {
     );
 }
 
-// Verbindung zeichnen (falls keine doppelte Verbindung existiert)
+// Verbindung zeichnen
 function drawConnection(card1, card2) {
     if (!connectionExists(card1, card2)) {
         connections.push({ card1, card2 });
     }
     redrawConnections();
-}
-
-// Verbindung löschen
-function deleteConnection(card1, card2) {
-    const index = connections.findIndex(conn => 
-        (conn.card1 === card1 && conn.card2 === card2) ||
-        (conn.card1 === card2 && conn.card2 === card1)
-    );
-    if (index !== -1) {
-        connections.splice(index, 1);
-        redrawConnections();
-    }
 }
 
 // Verbindungen neu zeichnen
@@ -193,62 +185,6 @@ function toggleCard(card) {
     card.classList.toggle('flipped');
 }
 
-// Initiales Raster zeichnen
-drawGrid();
-
-// Event Listener für Fenstergrößenänderungen
-window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    redrawConnections();
-});
-
-// Funktion zum Laden der Karten aus JSON
-async function loadCards() {
-    console.log('Fetching cards from JSON...');
-    const response = await fetch('https://sharonmabel.github.io/MindMaps/cards.json');
-    console.log('Response:', response);
-
-    if (!response.ok) {
-        console.error('Error fetching cards:', response.status);
-        return;
-    }
-
-    const cards = await response.json();
-    console.log('Loaded cards:', cards);
-
-    const cardContainer = document.getElementById('cardContainer');
-    cardContainer.innerHTML = '';
-
-    cards.forEach(cardData => {
-        console.log('Creating card:', cardData);
-        // Restlicher Code zum Erstellen der Karten...
-    });
-}
-async function loadCards() {
-    const response = await fetch('https://sharonmabel.github.io/MindMaps/cards.json');
-    const cards = await response.json();
-    
-    const cardContainer = document.getElementById('cardContainer');
-    cardContainer.innerHTML = '';
-
-    cards.forEach(cardData => {
-        const card = document.createElement('div');
-        card.classList.add('card');
-        card.innerHTML = `
-            <div class="card-front"><h2>${cardData.frontText}</h2></div>
-            <div class="card-back"><p>${cardData.backText}</p></div>
-            <img src="https://sharonmabel.github.io/MindMaps/Black%20Lock%20Icon.png" class="lock-icon" onclick="toggleLock(this)">
-        `;
-        cardContainer.appendChild(card);
-        makeCardDraggable(card);
-        card.querySelector('.lock-icon').classList.add('unlocked');
-    });
-}
-
-// Ruft die Karten beim Laden der Seite ab
-window.onload = loadCards;
-
 // Einstellungsmenü
 const settingsMenu = document.getElementById('settingsMenu');
 const modeToggle = document.getElementById('modeToggle');
@@ -278,3 +214,135 @@ lineWidthInput.addEventListener('input', () => {
     lineWidth = parseInt(lineWidthInput.value);
     redrawConnections();
 });
+
+// Initiales Setup
+window.addEventListener('load', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    drawGrid();
+});
+
+// Event Listener für Fenstergrößenänderungen
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    redrawConnections();
+});
+// ... (vorheriger Code bleibt unverändert bis zum Event Listener für Fenstergrößenänderungen)
+
+// Funktion zum Laden der Karten aus JSON
+async function loadCards() {
+    try {
+        console.log('Fetching cards from JSON...');
+        const response = await fetch('https://sharonmabel.github.io/MindMaps/cards.json');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const cards = await response.json();
+        console.log('Loaded cards:', cards);
+
+        const cardContainer = document.getElementById('cardContainer');
+        cardContainer.innerHTML = ''; // Container leeren
+        
+        // Karten aus JSON erstellen
+        cards.forEach((cardData, index) => {
+            console.log('Creating card:', cardData);
+            
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.style.width = '300px';
+            card.style.height = '200px';
+            card.style.position = 'absolute';
+            
+            // Position aus JSON verwenden oder Standard-Position setzen
+            card.style.top = cardData.top || `${50 + (index * 20)}px`;
+            card.style.left = cardData.left || `${50 + (index * 20)}px`;
+            
+            card.innerHTML = `
+                <div class="card-front"><h2>${cardData.frontText}</h2></div>
+                <div class="card-back"><p>${cardData.backText}</p></div>
+                <img src="https://sharonmabel.github.io/MindMaps/Black%20Lock%20Icon.png" class="lock-icon" onclick="toggleLock(this)">
+            `;
+
+            // Karte zum Container hinzufügen
+            cardContainer.appendChild(card);
+            
+            // Event Listener und Funktionalität hinzufügen
+            card.addEventListener('click', () => handleCardClick(card));
+            makeCardDraggable(card);
+            
+            // Lock-Status setzen
+            const lockIcon = card.querySelector('.lock-icon');
+            lockIcon.classList.add('unlocked');
+            if (cardData.locked) {
+                toggleLock(lockIcon);
+            }
+        });
+
+        // Verbindungen aus JSON laden, falls vorhanden
+        if (cards.connections) {
+            cards.connections.forEach(conn => {
+                const card1 = cardContainer.children[conn.from];
+                const card2 = cardContainer.children[conn.to];
+                if (card1 && card2) {
+                    drawConnection(card1, card2);
+                }
+            });
+        }
+
+    } catch (error) {
+        console.error('Error loading cards:', error);
+    }
+}
+
+// Funktion zum Speichern des aktuellen Zustands als JSON
+function saveCardsToJSON() {
+    const cardContainer = document.getElementById('cardContainer');
+    const cards = Array.from(cardContainer.children).map(card => ({
+        frontText: card.querySelector('.card-front h2').textContent,
+        backText: card.querySelector('.card-back p').textContent,
+        top: card.style.top,
+        left: card.style.left,
+        locked: card.classList.contains('locked')
+    }));
+
+    // Verbindungen speichern
+    const connectionData = connections.map(conn => ({
+        from: Array.from(cardContainer.children).indexOf(conn.card1),
+        to: Array.from(cardContainer.children).indexOf(conn.card2)
+    }));
+
+    const saveData = {
+        cards: cards,
+        connections: connectionData
+    };
+
+    // JSON-String erstellen
+    const jsonString = JSON.stringify(saveData, null, 2);
+    console.log('Saved JSON:', jsonString);
+    
+    // Optional: Download als Datei anbieten
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mindmap.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Initiales Setup erweitern
+window.addEventListener('load', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    drawGrid();
+    loadCards(); // Karten beim Start laden
+});
+
+// Optional: Speicher-Button zum Interface hinzufügen
+const saveButton = document.createElement('button');
+saveButton.textContent = 'Mindmap speichern';
+saveButton.onclick = saveCardsToJSON;
+document.body.appendChild(saveButton);
